@@ -1,9 +1,10 @@
+import json
 import shutil
 import sys
 import tkinter as tk
 from datetime import datetime
 from pathlib import Path
-from tkinter import messagebox, ttk
+from tkinter import messagebox, ttk, simpledialog
 
 
 class FTLSaveManager:
@@ -27,6 +28,10 @@ class FTLSaveManager:
         self.saves_folder = self.script_folder / "saves"
         # Create saves folder if it doesn't exist
         self.saves_folder.mkdir(exist_ok=True)
+        
+        # Path for descriptions file
+        self.descriptions_file = self.saves_folder / "descriptions.json"
+        self.descriptions = self.load_descriptions()
         # Check if FTL folder and continue.sav exist
         if not self.check_prerequisites():
             return
@@ -106,14 +111,33 @@ class FTLSaveManager:
             if not self.continue_sav_path.exists():
                 messagebox.showerror("Error", "continue.sav file not found!")
                 return
+            
+            # Ask for optional description
+            description = simpledialog.askstring(
+                "Save Description",
+                "Enter an optional description for this save file:\n(Leave blank for no description)",
+                parent=self.root
+            )
+            
             # Generate timestamp filename
             timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             save_filename = f"continue_{timestamp}.sav"
             save_path = self.saves_folder / save_filename
+            
             # Copy the file
             shutil.copy2(self.continue_sav_path, save_path)
+            
+            # Save description if provided
+            if description and description.strip():
+                self.descriptions[save_filename] = description.strip()
+                self.save_descriptions()
+            
             self.status_var.set(f"Saved: {save_filename}")
-            messagebox.showinfo("Success", f"Game saved as:\n{save_filename}")
+            success_msg = f"Game saved as:\n{save_filename}"
+            if description and description.strip():
+                success_msg += f"\n\nDescription: {description.strip()}"
+            messagebox.showinfo("Success", success_msg)
+            
             # Refresh the list
             self.refresh_saves_list()
         except Exception as e:
@@ -138,8 +162,11 @@ class FTLSaveManager:
                     # More readable date format: "Monday, January 15, 2025 at 2:30 PM"
                     readable_date = mod_time.strftime("%A, %B %d, %Y at %I:%M %p")
 
-                    # Create button text with only the readable date
+                    # Create button text with date and description if available
                     button_text = readable_date
+                    if save_file.name in self.descriptions:
+                        description = self.descriptions[save_file.name]
+                        button_text = f"{description}\n{readable_date}"
 
                     # Create button that loads this specific save
                     load_button = ttk.Button(
@@ -220,6 +247,11 @@ class FTLSaveManager:
                 # Delete the file
                 save_file.unlink()
                 
+                # Remove description if it exists
+                if save_file.name in self.descriptions:
+                    del self.descriptions[save_file.name]
+                    self.save_descriptions()
+                
                 self.status_var.set(f"Deleted: {save_file.name}")
                 messagebox.showinfo("Deleted", f"Save file deleted successfully!\n\n{save_file.stem}")
                 
@@ -249,6 +281,25 @@ class FTLSaveManager:
         y = (screen_height - height) // 2
         
         self.root.geometry(f"{width}x{height}+{x}+{y}")
+    
+    def load_descriptions(self):
+        """Load save file descriptions from JSON file"""
+        try:
+            if self.descriptions_file.exists():
+                with open(self.descriptions_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            return {}
+        except Exception as e:
+            print(f"Error loading descriptions: {e}")
+            return {}
+    
+    def save_descriptions(self):
+        """Save descriptions to JSON file"""
+        try:
+            with open(self.descriptions_file, 'w', encoding='utf-8') as f:
+                json.dump(self.descriptions, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            print(f"Error saving descriptions: {e}")
     
     def run(self):
         """Start the application"""
