@@ -4,13 +4,16 @@ A Python GUI application for managing save files in **FTL: Faster Than Light**, 
 
 ## Overview
 
-FTL Save Manager allows you to easily backup and restore your game progress in FTL: Faster Than Light. The game only supports a single save slot (`continue.sav`), making it impossible to maintain multiple game runs simultaneously. This tool solves that problem by letting you save and load different game states.
+FTL Save Manager allows you to easily backup and restore your game progress in FTL: Faster Than Light. The game only supports a single save slot (`continue.sav`), making it impossible to maintain multiple game runs simultaneously. This tool solves that problem by letting you save and load different game states with optional custom descriptions.
 
 ## Features
 
-- **Save Management**: Backup your current game progress with timestamped filenames
-- **Game Restoration**: Load any previously saved game state back to your active save slot
-- **User-Friendly GUI**: Clean, intuitive interface built with tkinter
+- **Save Management with Descriptions**: Backup your current game progress with optional custom descriptions
+- **One-Click Loading**: Click any save button to instantly load that game state
+- **Individual File Deletion**: Delete specific saves with small × buttons
+- **Dynamic Interface**: Window automatically resizes based on content
+- **Readable Timestamps**: All dates displayed in natural language format
+- **Standalone Executable**: No Python installation required for end users
 - **Automatic Validation**: Checks for FTL installation and existing save files
 - **Safe Operations**: Confirmation dialogs prevent accidental overwrites
 - **No Dependencies**: Uses only Python standard library components
@@ -18,32 +21,34 @@ FTL Save Manager allows you to easily backup and restore your game progress in F
 ## Requirements
 
 - **Windows 10/11**
-- **Python 3.13+**
+- **Python 3.13+** (for source code execution)
 - **FTL: Faster Than Light** installed and run at least once
-- **uv** package manager (optional, but recommended)
+- **uv** package manager (optional, for development)
 
 ## Installation
 
 1. **Clone or download this repository**
-2. **Ensure you have Python 3.13+ installed**
-3. **Install uv** (if not already installed):
-   ```bash
-   pip install uv
-   ```
+2. **For standalone use**: Simply run `FTL Save Manager.exe` from the `dist/` folder
+3. **For development**: Ensure you have Python 3.13+ installed
 
 ## Usage
 
 ### Running the Application
 
-**Option 1: Using uv (recommended)**
-```bash
-uv run main.py
-```
+**Option 1: Standalone Executable (Easiest)**
+Simply double-click `FTL Save Manager.exe` located in the `dist/` folder. This executable includes all dependencies and doesn't require Python to be installed.
 
 **Option 2: Direct Python execution**
 ```bash
 python main.py
 ```
+
+**Option 3: Using uv**
+```bash
+uv run main.py
+```
+
+> **Note**: If you encounter permission errors with uv on Windows, use the direct Python method above.
 
 ### How It Works
 
@@ -54,35 +59,48 @@ python main.py
 2. **If validation fails**, you'll see an error dialog explaining what's missing
 
 3. **If validation succeeds**, the main interface opens with:
-   - **Current Save Info**: Shows when your current game was last saved
-   - **Save Current Game**: Creates a timestamped backup of your current progress
-   - **Saved Games List**: Shows all your backed-up saves with timestamps
-   - **Load Selected Save**: Restores a selected backup to your active save slot
+   - **Current Save Info**: Shows when your current game was last saved (readable format)
+   - **Save Current Game**: Creates a timestamped backup with optional description
+   - **Individual Save Buttons**: Each save displays as a clickable button
+   - **Delete Buttons**: Small × buttons next to each save for deletion
 
 ### Saving Your Progress
 
 1. Click **"Save Current Game"**
-2. Your current `continue.sav` is copied to the `saves/` folder with a timestamp
-3. Format: `continue_YYYY-MM-DD_HH-MM-SS.sav`
+2. **Optional**: Enter a description for your save (e.g., "Before boss fight", "Good weapon loadout")
+3. Your current `continue.sav` is copied to the `saves/` folder with timestamp
+4. Format: `continue_YYYY-MM-DD_HH-MM-SS.sav`
 
 ### Loading a Previous Save
 
-1. Select a save from the **Saved Games** list
-2. Click **"Load Selected Save"**
+1. **Simply click any save button** in the list
+2. Each button shows:
+   - Your custom description (if provided)
+   - Readable timestamp (e.g., "Monday, January 15, 2025 at 2:30 PM")
 3. Confirm the operation when prompted
 4. The selected save overwrites your current `continue.sav`
+
+### Deleting a Save
+
+1. Click the **×** button next to any save
+2. Confirm the deletion when prompted
+3. The save file and its description are permanently removed
 
 ## File Structure
 
 ```
 ftl_savemanager/
-├── main.py                 # Main application
-├── saves/                  # Auto-created folder for save backups
+├── dist/
+│   └── FTL Save Manager.exe    # Standalone executable (~8.8 MB)
+├── main.py                     # Main application source
+├── saves/                      # Auto-created folder for save backups
 │   ├── continue_2025-01-15_14-30-22.sav
 │   ├── continue_2025-01-15_16-45-10.sav
+│   ├── descriptions.json       # Save file descriptions
 │   └── ...
-├── pyproject.toml         # Project configuration
-└── README.md             # This file
+├── build_exe.bat              # Build script for creating executable
+├── pyproject.toml             # Project configuration
+└── README.md                  # This file
 ```
 
 ## Expected FTL Installation Path
@@ -97,6 +115,21 @@ The application looks for FTL saves in the standard location:
 C:\Users\YourUsername\Documents\My Games\FasterThanLight\continue.sav
 ```
 
+## Interface Features
+
+### Save File Display
+- **With Description**: Shows custom description above the timestamp
+- **Without Description**: Shows only the readable timestamp
+- **Format Examples**:
+  - `"Before final boss\nMonday, January 15, 2025 at 2:30 PM"`
+  - `"Monday, January 15, 2025 at 2:30 PM"`
+
+### Dynamic Layout
+- **Content-Based Width**: Window width adjusts to fit button content
+- **No Minimum Size**: Window can be as small as needed
+- **Auto-Resize**: Window automatically resizes when saves are added/removed
+- **No Scrollbars**: Clean interface without clutter
+
 ## Troubleshooting
 
 ### "FTL folder not found" Error
@@ -109,14 +142,23 @@ C:\Users\YourUsername\Documents\My Games\FasterThanLight\continue.sav
 - The game must have an active save to manage
 
 ### Permission Issues with uv
-- Try running directly with `python main.py`
-- Ensure Python is properly installed and in your PATH
+- **Recommended solution**: Use `python main.py` instead
+- **Root cause**: Windows security policies may prevent uv from creating virtual environments
+- **Alternative**: Run terminal as administrator, then try `uv run main.py`
+- **Verify Python**: Ensure Python is properly installed and accessible via `python --version`
+
+### Antivirus/Windows Security Warnings
+- **Standalone executable**: Windows Defender or antivirus software may flag the executable as suspicious
+- **This is normal**: PyInstaller executables often trigger false positives
+- **Solution**: Add the `dist/` folder to your antivirus exclusions or approve the file when prompted
+- **Alternative**: Use the Python source code directly (`python main.py`)
 
 ## Safety Notes
 
 - **Always backup important saves**: While this tool is designed to be safe, always keep important saves backed up
 - **Close FTL before using**: Don't modify saves while the game is running
 - **Confirmation dialogs**: The app shows confirmation before overwriting your current save
+- **Description persistence**: Save descriptions are stored in `descriptions.json` and preserved between sessions
 
 ## Game Information
 
@@ -126,6 +168,22 @@ C:\Users\YourUsername\Documents\My Games\FasterThanLight\continue.sav
 - Maintain multiple concurrent playthroughs  
 - Share interesting game states with friends
 - Practice difficult encounters
+- Keep saves at key decision points
+- Organize saves by ship type or strategy
+
+## Technical Details
+
+### Save File Management
+- **Automatic Path Detection**: Works with both Python script and standalone executable
+- **JSON Descriptions**: Save descriptions stored in UTF-8 encoded JSON format
+- **Error Handling**: Graceful handling of missing files and corrupted data
+- **File Validation**: Comprehensive checks before operations
+
+### User Interface
+- **tkinter-based**: Uses Python's built-in GUI framework
+- **Responsive Design**: Interface adapts to content size
+- **Accessible**: Clear labels and confirmation dialogs
+- **Professional**: Clean, modern appearance
 
 ## License
 
