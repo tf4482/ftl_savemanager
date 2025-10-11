@@ -92,7 +92,8 @@ class FTLSaveManager:
         # Simple frame for save buttons - directly in main window
         self.saves_frame = ttk.Frame(main_frame)
         self.saves_frame.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(10, 0))
-        self.saves_frame.columnconfigure(0, weight=1)
+        self.saves_frame.columnconfigure(0, weight=1)  # Load button column expands
+        self.saves_frame.columnconfigure(1, weight=0)  # Delete button column fixed width
         # Status bar
         self.status_var = tk.StringVar()
         self.status_var.set("Ready")
@@ -141,15 +142,21 @@ class FTLSaveManager:
                     button_text = readable_date
 
                     # Create button that loads this specific save
-                    save_button = ttk.Button(
+                    load_button = ttk.Button(
                         self.saves_frame,
                         text=button_text,
                         command=lambda sf=save_file: self.load_save_file(sf)
                     )
-                    save_button.grid(row=i, column=0, sticky=(tk.W, tk.E), pady=2, padx=5)
+                    load_button.grid(row=i, column=0, sticky=(tk.W, tk.E), pady=2, padx=(5, 2))
 
-                    # Configure button to expand horizontally
-                    self.saves_frame.columnconfigure(0, weight=1)
+                    # Create small delete button
+                    delete_button = ttk.Button(
+                        self.saves_frame,
+                        text="×",
+                        width=3,
+                        command=lambda sf=save_file: self.delete_save_file(sf)
+                    )
+                    delete_button.grid(row=i, column=1, sticky=tk.E, pady=2, padx=(2, 5))
             else:
                 # Show message when no saves found
                 no_saves_label = ttk.Label(self.saves_frame, text="No saved games found")
@@ -191,6 +198,37 @@ class FTLSaveManager:
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load save file:\n{str(e)}")
             self.status_var.set("Error loading save")
+    
+    def delete_save_file(self, save_file):
+        """Delete a specific save file"""
+        try:
+            if not save_file.exists():
+                messagebox.showerror("Error", f"Save file not found: {save_file.name}")
+                return
+
+            # Get readable date for confirmation
+            mod_time = datetime.fromtimestamp(save_file.stat().st_mtime)
+            readable_date = mod_time.strftime("%A, %B %d, %Y at %I:%M %p")
+
+            # Confirm the deletion
+            result = messagebox.askyesno(
+                "Confirm Delete",
+                f"Are you sure you want to delete this save file?\n\n{save_file.stem}\nSaved: {readable_date}\n\nThis action cannot be undone!"
+            )
+
+            if result:
+                # Delete the file
+                save_file.unlink()
+                
+                self.status_var.set(f"Deleted: {save_file.name}")
+                messagebox.showinfo("Deleted", f"Save file deleted successfully!\n\n{save_file.stem}")
+                
+                # Refresh the list to remove the deleted file
+                self.refresh_saves_list()
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to delete save file:\n{str(e)}")
+            self.status_var.set("Error deleting save")
     
     def update_window_size(self):
         """Update window size to fit content"""
