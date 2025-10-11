@@ -1,7 +1,9 @@
 [project]
 name = "ftl-savemanager"
 version = "0.1.0"
-description = "Add your description here"
+description = "FTL Save Manager - A GUI tool for managing FTL: Faster Than Light save files"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "pyinstaller>=6.0.0",
+]
