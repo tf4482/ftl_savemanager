@@ -76,13 +76,16 @@ python main.py
 
 ```
 ftl_savemanager/
-├── main.py                 # Main application
-├── saves/                  # Auto-created folder for save backups
+├── dist/
+│   └── FTL Save Manager.exe    # Standalone executable (8.8 MB)
+├── main.py                     # Main application source
+├── saves/                      # Auto-created folder for save backups
 │   ├── continue_2025-01-15_14-30-22.sav
 │   ├── continue_2025-01-15_16-45-10.sav
 │   └── ...
-├── pyproject.toml         # Project configuration
-└── README.md             # This file
+├── build_exe.bat              # Build script for creating executable
+├── pyproject.toml             # Project configuration
+└── README.md                  # This file
 ```
 
 ## Expected FTL Installation Path
