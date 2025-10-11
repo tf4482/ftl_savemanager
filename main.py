@@ -1,4 +1,5 @@
 import shutil
+import sys
 import tkinter as tk
 from datetime import datetime
 from pathlib import Path
@@ -9,13 +10,20 @@ class FTLSaveManager:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("FTL Save Manager")
-        self.root.geometry("600x400")
         self.root.resizable(True, True)
         # Set up paths
         self.user_home = Path.home()
         self.ftl_folder = self.user_home / "Documents" / "My Games" / "FasterThanLight"
         self.continue_sav_path = self.ftl_folder / "continue.sav"
-        self.script_folder = Path(__file__).parent
+
+        # Get the correct script folder for both .py and .exe execution
+        if getattr(sys, 'frozen', False):
+            # Running as executable (PyInstaller)
+            self.script_folder = Path(sys.executable).parent
+        else:
+            # Running as script
+            self.script_folder = Path(__file__).parent
+
         self.saves_folder = self.script_folder / "saves"
         # Create saves folder if it doesn't exist
         self.saves_folder.mkdir(exist_ok=True)
@@ -24,6 +32,9 @@ class FTLSaveManager:
             return
         self.setup_ui()
         self.refresh_saves_list()
+
+        # Initial window sizing
+        self.update_window_size()
 
     def check_prerequisites(self):
         """Check if FTL folder and continue.sav exist"""
@@ -54,7 +65,7 @@ class FTLSaveManager:
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(1, weight=1)
-        main_frame.rowconfigure(2, weight=1)
+        main_frame.rowconfigure(3, weight=1)
         # Title
         title_label = ttk.Label(main_frame, text="FTL Save Manager", font=("Arial", 16, "bold"))
         title_label.grid(row=0, column=0, columnspan=2, pady=(0, 20))
@@ -66,39 +77,27 @@ class FTLSaveManager:
         # Show file info
         if self.continue_sav_path.exists():
             mod_time = datetime.fromtimestamp(self.continue_sav_path.stat().st_mtime)
-            file_info = f"Last modified: {mod_time.strftime('%Y-%m-%d %H:%M:%S')}"
+            file_info = f"Last modified: {mod_time.strftime('%A, %B %d, %Y at %I:%M %p')}"
         else:
             file_info = "File not found"
         ttk.Label(current_frame, text=file_info).grid(row=0, column=1, sticky=tk.W, padx=(10, 0))
         # Save current button
         save_button = ttk.Button(current_frame, text="Save Current Game", command=self.save_current)
         save_button.grid(row=1, column=0, columnspan=2, pady=(10, 0))
-        # Saved games section
-        saves_frame = ttk.LabelFrame(main_frame, text="Saved Games", padding="10")
-        saves_frame.grid(row=2, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(10, 0))
-        saves_frame.columnconfigure(0, weight=1)
-        saves_frame.rowconfigure(1, weight=1)
+
         # Refresh button
-        refresh_button = ttk.Button(saves_frame, text="Refresh List", command=self.refresh_saves_list)
-        refresh_button.grid(row=0, column=0, sticky=tk.W, pady=(0, 10))
-        # Saves listbox with scrollbar
-        listbox_frame = ttk.Frame(saves_frame)
-        listbox_frame.grid(row=1, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-        listbox_frame.columnconfigure(0, weight=1)
-        listbox_frame.rowconfigure(0, weight=1)
-        self.saves_listbox = tk.Listbox(listbox_frame, selectmode=tk.SINGLE)
-        self.saves_listbox.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-        scrollbar = ttk.Scrollbar(listbox_frame, orient=tk.VERTICAL, command=self.saves_listbox.yview)
-        scrollbar.grid(row=0, column=1, sticky=(tk.N, tk.S))
-        self.saves_listbox.configure(yscrollcommand=scrollbar.set)
-        # Load button
-        load_button = ttk.Button(saves_frame, text="Load Selected Save", command=self.load_selected_save)
-        load_button.grid(row=2, column=0, pady=(10, 0))
+        refresh_button = ttk.Button(main_frame, text="Refresh Save List", command=self.refresh_saves_list)
+        refresh_button.grid(row=2, column=0, columnspan=2, pady=(10, 0))
+
+        # Simple frame for save buttons - directly in main window
+        self.saves_frame = ttk.Frame(main_frame)
+        self.saves_frame.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(10, 0))
+        self.saves_frame.columnconfigure(0, weight=1)
         # Status bar
         self.status_var = tk.StringVar()
         self.status_var.set("Ready")
         status_bar = ttk.Label(main_frame, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W)
-        status_bar.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(10, 0))
+        status_bar.grid(row=4, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(10, 0))
 
     def save_current(self):
         """Save the current continue.sav with a timestamp"""
@@ -123,51 +122,96 @@ class FTLSaveManager:
     def refresh_saves_list(self):
         """Refresh the list of saved games"""
         try:
-            # Clear the listbox
-            self.saves_listbox.delete(0, tk.END)
+            # Clear existing buttons
+            for widget in self.saves_frame.winfo_children():
+                widget.destroy()
+
             # Get all .sav files from saves folder
             save_files = list(self.saves_folder.glob("*.sav"))
             save_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)  # Sort by modification time, newest first
-            # Add files to listbox
-            for save_file in save_files:
-                mod_time = datetime.fromtimestamp(save_file.stat().st_mtime)
-                display_name = f"{save_file.stem} ({mod_time.strftime('%Y-%m-%d %H:%M:%S')})"
-                self.saves_listbox.insert(tk.END, display_name)
-            if not save_files:
-                self.saves_listbox.insert(tk.END, "No saved games found")
+
+            # Create buttons for each save file
+            if save_files:
+                for i, save_file in enumerate(save_files):
+                    mod_time = datetime.fromtimestamp(save_file.stat().st_mtime)
+                    # More readable date format: "Monday, January 15, 2025 at 2:30 PM"
+                    readable_date = mod_time.strftime("%A, %B %d, %Y at %I:%M %p")
+
+                    # Create button text with only the readable date
+                    button_text = readable_date
+
+                    # Create button that loads this specific save
+                    save_button = ttk.Button(
+                        self.saves_frame,
+                        text=button_text,
+                        command=lambda sf=save_file: self.load_save_file(sf)
+                    )
+                    save_button.grid(row=i, column=0, sticky=(tk.W, tk.E), pady=2, padx=5)
+
+                    # Configure button to expand horizontally
+                    self.saves_frame.columnconfigure(0, weight=1)
+            else:
+                # Show message when no saves found
+                no_saves_label = ttk.Label(self.saves_frame, text="No saved games found")
+                no_saves_label.grid(row=0, column=0, pady=20)
+
             self.status_var.set(f"Found {len(save_files)} saved games")
+            
+            # Update window size to fit new content
+            self.update_window_size()
+            
         except Exception as e:
             messagebox.showerror("Error", f"Failed to refresh saves list:\n{str(e)}")
             self.status_var.set("Error refreshing list")
 
-    def load_selected_save(self):
-        """Load the selected save file"""
+    def load_save_file(self, save_file):
+        """Load a specific save file"""
         try:
-            selection = self.saves_listbox.curselection()
-            if not selection:
-                messagebox.showwarning("Warning", "Please select a save file to load.")
+            if not save_file.exists():
+                messagebox.showerror("Error", f"Save file not found: {save_file.name}")
                 return
-            # Get all save files again (in same order as displayed)
-            save_files = list(self.saves_folder.glob("*.sav"))
-            save_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
-            if not save_files or selection[0] >= len(save_files):
-                messagebox.showerror("Error", "Invalid selection or no save files available.")
-                return
-            selected_file = save_files[selection[0]]
+
+            # Get readable date for confirmation
+            mod_time = datetime.fromtimestamp(save_file.stat().st_mtime)
+            readable_date = mod_time.strftime("%A, %B %d, %Y at %I:%M %p")
+
             # Confirm the action
             result = messagebox.askyesno(
                 "Confirm Load",
-                f"This will overwrite your current game progress.\n\nLoad save file:\n{selected_file.name}\n\nAre you sure?"
+                f"This will overwrite your current game progress.\n\nLoad save:\n{save_file.stem}\nSaved: {readable_date}\n\nAre you sure?"
             )
+
             if result:
                 # Copy selected save to continue.sav
-                shutil.copy2(selected_file, self.continue_sav_path)
-                self.status_var.set(f"Loaded: {selected_file.name}")
-                messagebox.showinfo("Success", "Save file loaded successfully!")
+                shutil.copy2(save_file, self.continue_sav_path)
+
+                self.status_var.set(f"Loaded: {save_file.name}")
+                messagebox.showinfo("Success", f"Save file loaded successfully!\n\n{save_file.stem}")
+
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load save file:\n{str(e)}")
             self.status_var.set("Error loading save")
-
+    
+    def update_window_size(self):
+        """Update window size to fit content"""
+        self.root.update_idletasks()
+        
+        # Calculate optimal size based on content
+        content_width = self.root.winfo_reqwidth()
+        content_height = self.root.winfo_reqheight()
+        
+        # Add some padding
+        width = content_width + 100
+        height = content_height + 50
+        
+        # Center the window on screen
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+        
+        self.root.geometry(f"{width}x{height}+{x}+{y}")
+    
     def run(self):
         """Start the application"""
         self.root.mainloop()
