@@ -56,12 +56,6 @@ class FTLSaveManager:
             )
             self.root.destroy()
             return False
-        if not self.continue_sav_path.exists():
-            messagebox.showerror(
-                "Error",
-                f"continue.sav file not found!\n\nExpected location:\n{self.continue_sav_path}\n\nPlease start a game in FTL to create a save file.",
-                parent=self.root
-            )
             self.root.destroy()
             return False
         return True
