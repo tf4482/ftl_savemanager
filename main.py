@@ -79,7 +79,7 @@ class FTLSaveManager:
         # Title
         title_label = ttk.Label(main_frame, text="FTL Save Manager", font=("Arial", 16, "bold"))
         title_label.grid(row=0, column=0, columnspan=2, pady=(0, 20))
-        
+
         # Game control frame
         game_control_frame = ttk.LabelFrame(main_frame, text="Game Controls", padding="10")
         game_control_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
@@ -93,7 +93,7 @@ class FTLSaveManager:
         # Change game path button
         change_path_button = ttk.Button(game_control_frame, text="Change Game Path", command=self.change_game_path)
         change_path_button.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=(5, 0))
-        
+
         # Current save section
         current_frame = ttk.LabelFrame(main_frame, text="Current Save", padding="10")
         current_frame.grid(row=2, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
@@ -110,20 +110,16 @@ class FTLSaveManager:
         save_button = ttk.Button(current_frame, text="Save Current Game", command=self.save_current)
         save_button.grid(row=1, column=0, columnspan=2, pady=(10, 0))
 
-        # Refresh button
-        refresh_button = ttk.Button(main_frame, text="Refresh Save List", command=self.refresh_saves_list)
-        refresh_button.grid(row=3, column=0, columnspan=2, pady=(3, 0))
-
         # Simple frame for save buttons - directly in main window
         self.saves_frame = ttk.Frame(main_frame)
-        self.saves_frame.grid(row=4, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(10, 0))
+        self.saves_frame.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(10, 0))
         self.saves_frame.columnconfigure(0, weight=1)  # Load button column expands
         self.saves_frame.columnconfigure(1, weight=0)  # Delete button column fixed width
         # Status bar
         self.status_var = tk.StringVar()
         self.status_var.set("Ready")
         status_bar = ttk.Label(main_frame, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W)
-        status_bar.grid(row=5, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(10, 0))
+        status_bar.grid(row=4, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(10, 0))
 
     def save_current(self):
         """Save the current continue.sav with a timestamp"""
@@ -156,7 +152,6 @@ class FTLSaveManager:
             success_msg = f"Game saved as:\n{save_filename}"
             if description and description.strip():
                 success_msg += f"\n\nDescription: {description.strip()}"
-            messagebox.showinfo("Success", success_msg)
 
             # Refresh the list
             self.refresh_saves_list()
@@ -273,7 +268,6 @@ class FTLSaveManager:
                     self.save_descriptions()
 
                 self.status_var.set(f"Deleted: {save_file.name}")
-                messagebox.showinfo("Deleted", f"Save file deleted successfully!\n\n{save_file.stem}")
 
                 # Refresh the list to remove the deleted file
                 self.refresh_saves_list()
