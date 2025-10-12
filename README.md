@@ -2,6 +2,8 @@
 
 A Python GUI application for managing save files in **FTL: Faster Than Light**, the popular indie space strategy game.
 
+<img width="521" height="493" alt="image" src="https://github.com/user-attachments/assets/aa6839d6-bbcf-4f7b-a996-a8a5d86f6aa5" />
+
 ## Overview
 
 FTL Save Manager allows you to easily backup and restore your game progress in FTL: Faster Than Light. The game only supports a single save slot (`continue.sav`), making it impossible to maintain multiple game runs simultaneously. This tool solves that problem by letting you save and load different game states with optional custom descriptions.
