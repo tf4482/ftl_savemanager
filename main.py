@@ -43,6 +43,9 @@ class FTLSaveManager:
         
         # Variable for maximize window checkbox
         self.maximize_window_var = tk.BooleanVar(value=self.config.get("maximize_window", False))
+        
+        # Auto-refresh timer ID
+        self.refresh_timer_id = None
         # Check if FTL folder and continue.sav exist
         if not self.check_prerequisites():
             return
@@ -51,6 +54,9 @@ class FTLSaveManager:
 
         # Initial window sizing
         self.update_window_size()
+        
+        # Start auto-refresh of current save info
+        self.start_auto_refresh()
 
     def check_prerequisites(self):
         """Check if FTL folder and continue.sav exist"""
@@ -113,13 +119,10 @@ class FTLSaveManager:
         current_frame.grid(row=2, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
         current_frame.columnconfigure(1, weight=1)
         ttk.Label(current_frame, text="continue.sav:").grid(row=0, column=0, sticky=tk.W)
-        # Show file info
-        if self.continue_sav_path.exists():
-            mod_time = datetime.fromtimestamp(self.continue_sav_path.stat().st_mtime)
-            file_info = f"Last modified: {mod_time.strftime('%A, %B %d, %Y at %I:%M %p')}"
-        else:
-            file_info = "File not found"
-        ttk.Label(current_frame, text=file_info).grid(row=0, column=1, sticky=tk.W, padx=(10, 0))
+        # Show file info - create a label that will be updated
+        self.current_save_info_label = ttk.Label(current_frame, text="")
+        self.current_save_info_label.grid(row=0, column=1, sticky=tk.W, padx=(10, 0))
+        self.update_current_save_info()
         # Save current button
         save_button = ttk.Button(current_frame, text="Save Current Game", command=self.save_current)
         save_button.grid(row=1, column=0, columnspan=2, pady=(10, 0))
@@ -487,9 +490,40 @@ class FTLSaveManager:
             messagebox.showerror("Error", f"Failed to launch game via Steam:\n{str(e)}")
             self.status_var.set("Error launching game via Steam")
 
+    def update_current_save_info(self):
+        """Update the current save file information display"""
+        try:
+            if self.continue_sav_path.exists():
+                mod_time = datetime.fromtimestamp(self.continue_sav_path.stat().st_mtime)
+                file_info = f"Last modified: {mod_time.strftime('%A, %B %d, %Y at %I:%M %p')}"
+            else:
+                file_info = "File not found"
+            self.current_save_info_label.config(text=file_info)
+        except Exception as e:
+            print(f"Error updating current save info: {e}")
+    
+    def start_auto_refresh(self):
+        """Start automatic refresh of current save info every 0.5 seconds"""
+        self.update_current_save_info()
+        # Schedule next refresh in 500ms (0.5 seconds)
+        self.refresh_timer_id = self.root.after(500, self.start_auto_refresh)
+    
+    def stop_auto_refresh(self):
+        """Stop the automatic refresh timer"""
+        if self.refresh_timer_id is not None:
+            self.root.after_cancel(self.refresh_timer_id)
+            self.refresh_timer_id = None
+
     def run(self):
         """Start the application"""
+        # Ensure cleanup on window close
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.root.mainloop()
+    
+    def on_closing(self):
+        """Handle window closing event"""
+        self.stop_auto_refresh()
+        self.root.destroy()
 
 
 def main():
