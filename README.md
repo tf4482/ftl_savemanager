@@ -10,6 +10,7 @@ FTL Save Manager allows you to easily backup and restore your game progress in F
 
 - **Game Launcher**: Launch FTL directly from the save manager with automatic working directory setup
 - **Steam Integration**: Launch FTL through Steam using the Steam protocol URL
+- **Auto-Maximize Window**: Optional feature to automatically maximize the game window after launch
 - **Configurable Game Path**: Easily set and change the game executable path
 - **Save Management with Descriptions**: Backup your current game progress with optional custom descriptions
 - **One-Click Loading**: Click any save button to instantly load that game state
@@ -83,6 +84,13 @@ uv run main.py
 4. Use **"Change Game Path"** to update the executable location if needed (e.g., after reinstalling)
 5. Game path is stored in `config.json` and remembered between sessions
 
+**Maximize Window Feature**
+- Check the **"Maximize Window"** checkbox in the Game Controls section to automatically maximize the FTL window after launch
+- Works with both launch methods (direct and Steam)
+- The application waits up to 30 seconds for the game window to appear, then maximizes it automatically
+- Setting is saved in `config.json` and persists between sessions
+- Uncheck the box to launch the game normally without maximization
+
 ### Saving Your Progress
 
 1. Click **"Save Current Game"**
@@ -112,7 +120,7 @@ ftl_savemanager/
 ├── dist/
 │   └── FTL Save Manager.exe    # Standalone executable (~8.8 MB)
 ├── main.py                     # Main application source
-├── config.json                 # Stores game executable path (auto-created)
+├── config.json                 # Stores game settings (auto-created)
 ├── saves/                      # Auto-created folder for save backups
 │   ├── continue_2025-01-15_14-30-22.sav
 │   ├── continue_2025-01-15_16-45-10.sav
@@ -141,6 +149,7 @@ C:\Users\YourUsername\Documents\My Games\FasterThanLight\continue.sav
 - **Launch Game**: Start FTL directly from the save manager using the configured executable path
 - **Launch via Steam**: Start FTL through Steam (requires Steam to be installed)
 - **Change Game Path**: Update the game executable location for direct launches
+- **Maximize Window**: Checkbox to automatically maximize the game window after launch (works with both launch methods)
 - **Auto-Configuration**: Prompts for game path on first direct launch if not set
 - **Working Directory**: Direct game launches use proper directory for resource loading
 
@@ -210,10 +219,11 @@ C:\Users\YourUsername\Documents\My Games\FasterThanLight\continue.sav
 
 ### Save File Management
 - **Automatic Path Detection**: Works with both Python script and standalone executable
-- **JSON Configuration**: Game path and descriptions stored in UTF-8 encoded JSON format
+- **JSON Configuration**: Game path, window settings, and descriptions stored in UTF-8 encoded JSON format
 - **Error Handling**: Graceful handling of missing files and corrupted data
 - **File Validation**: Comprehensive checks before operations
 - **Working Directory**: Game launches with proper working directory for resource loading
+- **Window Management**: Uses Windows API to detect and maximize the game window automatically
 
 ### User Interface
 - **tkinter-based**: Uses Python's built-in GUI framework
