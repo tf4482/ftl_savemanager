@@ -1,7 +1,10 @@
+import ctypes
 import json
 import shutil
 import subprocess
 import sys
+import threading
+import time
 import tkinter as tk
 from datetime import datetime
 from pathlib import Path
@@ -37,6 +40,9 @@ class FTLSaveManager:
         # Path for config file
         self.config_file = self.script_folder / "config.json"
         self.config = self.load_config()
+        
+        # Variable for maximize window checkbox
+        self.maximize_window_var = tk.BooleanVar(value=self.config.get("maximize_window", False))
         # Check if FTL folder and continue.sav exist
         if not self.check_prerequisites():
             return
@@ -92,6 +98,15 @@ class FTLSaveManager:
         # Change game path button
         change_path_button = ttk.Button(game_control_frame, text="Change Game Path", command=self.change_game_path)
         change_path_button.grid(row=0, column=2, sticky=(tk.W, tk.E), padx=(5, 0))
+        
+        # Maximize window checkbox
+        maximize_checkbox = ttk.Checkbutton(
+            game_control_frame,
+            text="Maximize Window",
+            variable=self.maximize_window_var,
+            command=self.on_maximize_window_changed
+        )
+        maximize_checkbox.grid(row=1, column=0, columnspan=3, sticky=tk.W, pady=(10, 0))
 
         # Current save section
         current_frame = ttk.LabelFrame(main_frame, text="Current Save", padding="10")
@@ -322,7 +337,10 @@ class FTLSaveManager:
                     return json.load(f)
             else:
                 # Create default config
-                default_config = {"game_exe_path": ""}
+                default_config = {
+                    "game_exe_path": "",
+                    "maximize_window": False
+                }
                 self.save_config(default_config)
                 return default_config
         except Exception as e:
@@ -387,6 +405,10 @@ class FTLSaveManager:
                 game_dir = Path(game_path).parent
                 subprocess.Popen([game_path], cwd=str(game_dir), shell=True)
                 self.status_var.set("Game launched successfully")
+                
+                # Maximize window if checkbox is checked
+                if self.maximize_window_var.get():
+                    self.wait_and_maximize_window()
             else:
                 messagebox.showerror("Error", "Unable to launch game. Please set a valid game path.")
 
@@ -394,9 +416,61 @@ class FTLSaveManager:
             messagebox.showerror("Error", f"Failed to launch game:\n{str(e)}")
             self.status_var.set("Error launching game")
 
+    def on_maximize_window_changed(self):
+        """Handle maximize window checkbox state change"""
+        self.config["maximize_window"] = self.maximize_window_var.get()
+        self.save_config()
+    
     def change_game_path(self):
         """Allow user to change the game executable path"""
         self.browse_game_exe()
+    
+    def wait_and_maximize_window(self):
+        """Wait for the FTL window and maximize it"""
+        def maximize_worker():
+            try:
+                # Wait up to 30 seconds for the window to appear
+                for _ in range(60):  # 60 attempts * 0.5 seconds = 30 seconds
+                    time.sleep(0.5)
+                    hwnd = self.find_window_by_title("FTL: Faster Than Light")
+                    if hwnd:
+                        # Wait a bit more for the window to fully initialize
+                        time.sleep(1)
+                        # Maximize the window
+                        ctypes.windll.user32.ShowWindow(hwnd, 3)  # SW_MAXIMIZE = 3
+                        self.status_var.set("Game window maximized")
+                        break
+            except Exception as e:
+                print(f"Error maximizing window: {e}")
+        
+        # Run in a separate thread to not block the UI
+        thread = threading.Thread(target=maximize_worker, daemon=True)
+        thread.start()
+    
+    def find_window_by_title(self, title):
+        """Find a window by its title using Windows API"""
+        try:
+            result_hwnd = [None]  # Use list to allow modification in nested function
+            
+            # EnumWindows callback
+            def enum_callback(hwnd, lparam):
+                if ctypes.windll.user32.IsWindowVisible(hwnd):
+                    length = ctypes.windll.user32.GetWindowTextLengthW(hwnd)
+                    if length > 0:
+                        buff = ctypes.create_unicode_buffer(length + 1)
+                        ctypes.windll.user32.GetWindowTextW(hwnd, buff, length + 1)
+                        if title in buff.value:
+                            result_hwnd[0] = hwnd
+                            return False  # Stop enumeration
+                return True  # Continue enumeration
+            
+            EnumWindowsProc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+            ctypes.windll.user32.EnumWindows(EnumWindowsProc(enum_callback), 0)
+            
+            return result_hwnd[0]
+        except Exception as e:
+            print(f"Error finding window: {e}")
+            return None
 
     def launch_via_steam(self):
         """Launch the game via Steam URL"""
@@ -405,6 +479,10 @@ class FTLSaveManager:
             self.status_var.set("Launching game via Steam...")
             subprocess.Popen(["cmd", "/c", "start", steam_url], shell=True)
             self.status_var.set("Game launched via Steam")
+            
+            # Maximize window if checkbox is checked
+            if self.maximize_window_var.get():
+                self.wait_and_maximize_window()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to launch game via Steam:\n{str(e)}")
             self.status_var.set("Error launching game via Steam")
