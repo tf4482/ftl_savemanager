@@ -8,6 +8,8 @@ FTL Save Manager allows you to easily backup and restore your game progress in F
 
 ## Features
 
+- **Game Launcher**: Launch FTL directly from the save manager with automatic working directory setup
+- **Configurable Game Path**: Easily set and change the game executable path
 - **Save Management with Descriptions**: Backup your current game progress with optional custom descriptions
 - **One-Click Loading**: Click any save button to instantly load that game state
 - **Individual File Deletion**: Delete specific saves with small × buttons
@@ -59,10 +61,19 @@ uv run main.py
 2. **If validation fails**, you'll see an error dialog explaining what's missing
 
 3. **If validation succeeds**, the main interface opens with:
+   - **Game Controls**: Launch FTL or change the game executable path
    - **Current Save Info**: Shows when your current game was last saved (readable format)
    - **Save Current Game**: Creates a timestamped backup with optional description
    - **Individual Save Buttons**: Each save displays as a clickable button
    - **Delete Buttons**: Small × buttons next to each save for deletion
+
+### Launching the Game
+
+1. Click **"Launch Game"** to start FTL directly from the save manager
+2. **First-time setup**: If the game path isn't configured, you'll be prompted to locate the game executable (usually `FTLGame.exe`)
+3. The game launches with its installation directory as the working directory for proper resource loading
+4. Use **"Change Game Path"** to update the executable location if needed (e.g., after reinstalling)
+5. Game path is stored in `config.json` and remembered between sessions
 
 ### Saving Your Progress
 
@@ -93,6 +104,7 @@ ftl_savemanager/
 ├── dist/
 │   └── FTL Save Manager.exe    # Standalone executable (~8.8 MB)
 ├── main.py                     # Main application source
+├── config.json                 # Stores game executable path (auto-created)
 ├── saves/                      # Auto-created folder for save backups
 │   ├── continue_2025-01-15_14-30-22.sav
 │   ├── continue_2025-01-15_16-45-10.sav
@@ -117,6 +129,12 @@ C:\Users\YourUsername\Documents\My Games\FasterThanLight\continue.sav
 
 ## Interface Features
 
+### Game Controls Section
+- **Launch Game**: Start FTL directly from the save manager
+- **Change Game Path**: Update the game executable location
+- **Auto-Configuration**: Prompts for game path on first launch if not set
+- **Working Directory**: Game launches with proper directory for resource loading
+
 ### Save File Display
 - **With Description**: Shows custom description above the timestamp
 - **Without Description**: Shows only the readable timestamp
@@ -131,6 +149,13 @@ C:\Users\YourUsername\Documents\My Games\FasterThanLight\continue.sav
 - **No Scrollbars**: Clean interface without clutter
 
 ## Troubleshooting
+
+### Game Launch Issues
+- **Game doesn't start**: Verify the game path is correct using "Change Game Path"
+- **Wrong game launches**: Update the executable path to point to the correct `FTLGame.exe`
+- **Can't locate game**: Common locations:
+  - Steam: `C:\Program Files (x86)\Steam\steamapps\common\FTL Faster Than Light\FTLGame.exe`
+  - GOG: `C:\GOG Games\FTL\FTLGame.exe`
 
 ### "FTL folder not found" Error
 - Ensure FTL: Faster Than Light is installed
@@ -156,9 +181,10 @@ C:\Users\YourUsername\Documents\My Games\FasterThanLight\continue.sav
 ## Safety Notes
 
 - **Always backup important saves**: While this tool is designed to be safe, always keep important saves backed up
-- **Close FTL before using**: Don't modify saves while the game is running
+- **Close FTL before switching saves**: Don't modify saves while the game is running
+- **Launch after loading**: You can safely launch the game after loading a save
 - **Confirmation dialogs**: The app shows confirmation before overwriting your current save
-- **Description persistence**: Save descriptions are stored in `descriptions.json` and preserved between sessions
+- **Persistent configuration**: Game path and descriptions are stored locally and preserved between sessions
 
 ## Game Information
 
@@ -175,9 +201,10 @@ C:\Users\YourUsername\Documents\My Games\FasterThanLight\continue.sav
 
 ### Save File Management
 - **Automatic Path Detection**: Works with both Python script and standalone executable
-- **JSON Descriptions**: Save descriptions stored in UTF-8 encoded JSON format
+- **JSON Configuration**: Game path and descriptions stored in UTF-8 encoded JSON format
 - **Error Handling**: Graceful handling of missing files and corrupted data
 - **File Validation**: Comprehensive checks before operations
+- **Working Directory**: Game launches with proper working directory for resource loading
 
 ### User Interface
 - **tkinter-based**: Uses Python's built-in GUI framework
