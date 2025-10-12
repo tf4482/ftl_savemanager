@@ -79,14 +79,19 @@ class FTLSaveManager:
         game_control_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
         game_control_frame.columnconfigure(0, weight=1)
         game_control_frame.columnconfigure(1, weight=1)
+        game_control_frame.columnconfigure(2, weight=1)
 
         # Launch game button
         launch_button = ttk.Button(game_control_frame, text="Launch Game", command=self.launch_game)
         launch_button.grid(row=0, column=0, sticky=(tk.W, tk.E), padx=(0, 5))
 
+        # Launch via Steam button
+        launch_steam_button = ttk.Button(game_control_frame, text="Launch via Steam", command=self.launch_via_steam)
+        launch_steam_button.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=(5, 5))
+
         # Change game path button
         change_path_button = ttk.Button(game_control_frame, text="Change Game Path", command=self.change_game_path)
-        change_path_button.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=(5, 0))
+        change_path_button.grid(row=0, column=2, sticky=(tk.W, tk.E), padx=(5, 0))
 
         # Current save section
         current_frame = ttk.LabelFrame(main_frame, text="Current Save", padding="10")
@@ -392,6 +397,17 @@ class FTLSaveManager:
     def change_game_path(self):
         """Allow user to change the game executable path"""
         self.browse_game_exe()
+
+    def launch_via_steam(self):
+        """Launch the game via Steam URL"""
+        try:
+            steam_url = "steam://rungameid/212680"
+            self.status_var.set("Launching game via Steam...")
+            subprocess.Popen(["cmd", "/c", "start", steam_url], shell=True)
+            self.status_var.set("Game launched via Steam")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to launch game via Steam:\n{str(e)}")
+            self.status_var.set("Error launching game via Steam")
 
     def run(self):
         """Start the application"""
